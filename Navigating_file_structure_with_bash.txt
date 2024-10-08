@@ -1,0 +1,62 @@
+# Useful commands to navigate within a unix system and communicate with bash terminal
+
+# 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 
+
+# print the working directory (.)
+pwd 
+# [OUTPUT] #   /home/ecosystems/Bioinformatics/Classes/BioInfo4EEG
+
+# To check your local file structure, use the command:
+tree -L 3      # -L <integrer> will indicate the layers to display
+
+    # [OUTPUT] #   
+    .
+    ├── Literature
+    ├── README.md
+    ├── Usefull_bash_commands.txt
+    └── Your_Project_Folder
+        ├── 01_code
+        ├── 02_data
+        │   ├── 01_raw
+        │   ├── 02_filtered
+        │   ├── 03_Denoised
+        │   └── 04_Downstream
+        ├── 03_results
+        └── BioInfo4EEG.Rproj
+
+# change directory
+cd [PATH] 
+
+# You will use the above command together with PATHS (where you want to go) to move around the 
+# file system structure.
+
+# What is a PATH? 
+# A PATH is a variable that indicates the file's location within the entire file structure of the system
+# There are ABSOLUTE (starting at the root / ) i.e:         "/user/home/"
+# and RELATIVE (relative to the working directory . ) i.e:      "./data/raw/
+
+# 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 
+
+# _ _ EXAMPLE _ _  #
+# Let's say you have some raw sequences (.fastq) you want to quality filter, with commands like fastqc or multiqc.
+# You have to move to the directory containing those raw .fastq files.
+
+    1) Where are you located within the directory structure?
+pwd
+# [OUTPUT] #    /home/ecosystems/Bioinformatics/Classes/BioInfo4EEG
+
+    2) What is the directory structure? Where are the files you want to access?
+tree -L 3 (see # [OUTPUT] #  above)
+
+    3) Move to that folder to perform and excecute the commands
+cd ./Your_Project_Folder/02_data/01_raw
+
+# You can now excecute fastqc and multiqc commands on .fastq files in the raw data folder
+
+# 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 # 0 
+
+# Performance and computational resources
+# Some steps in the primary bioinformatic processing of sequencing reads are quite demanding in terms of
+# memory and cpu usage. It can be usefull to observe the status of computational resources using: 
+ top
+ htop

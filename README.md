@@ -15,3 +15,6 @@
  Programming knowledge of Bash and R languages will help,
  as well as a general understanding of statistics. 
  
+ You can start the journey by going through the 
+ presentation
+ 
