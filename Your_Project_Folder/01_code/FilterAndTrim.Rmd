@@ -33,9 +33,8 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 **Note:** This step comes after **demultiplexing**, a step that splits a big .fastq file containing all reads of a single sequencing run (with reads comming from different samples all mixed in together) into separate .fastq files, each one containing sample-specific reads and/or either forward/reverse reads. Demultiplexing can be done in multiple ways (QIIME2, bash tools, etc). However, this processing step is typically done by the sequencing facility, so it will not be covered on this small course. For more info on this step (demultiplexing), visit <https://astrobiomike.github.io/amplicon/demultiplexing> or
 
-There is a ubiquous filtering and trimming process applied to DNA/RNA sequencing reads (.fastq files) that considers modifications to DNA fragments added during library preparation
+There is a ubiquous filtering and trimming process applied to DNA/RNA sequencing reads (.fastq files) that considers modifications to DNA fragments added during library preparation ...
 
 ```{r}
-getwd()
-list.files()
+
 ```
