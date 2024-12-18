@@ -1,0 +1,199 @@
+---
+title: "02_dada2denoisne"
+author: "Gabriel Tedone"
+date: "2024-11-18"
+output: html_document
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+ #| set wd for whole Rmd doc
+knitr::opts_knit$set(root.dir = "~/Bioinformatics/Classes/BioInfo4EEG/Your_Project_Folder")
+```
+
+# Denoising amplicon reads with DADA2
+
+[to do] DADA2 explanation
+
+[to do] Process main steps and overview
+
+### Libraries
+
+```{r}
+library(dada2)
+```
+
+### Set general parameters
+
+```{r}
+amplicon <- "16S"
+inpath <- "data/02_cleaning_fastqs/16S/cutadapt/"
+outpath <- "data/03_dada2denoising/"
+
+cat("We are going to process the following files: \n")
+list.files(inpath, pattern = "\\.fastq")
+```
+
+### Input data
+
+We will used "clean" reads (without indeterminations, primers, a min length and generally of good quality) as input for the DADA2 denoising algorithm.
+
+```{r}
+metadata <- read.csv("data/metadata.csv") #| read in the meatadata file
+
+# Input filtered .fastq files PATHS
+filtFs <- sort(list.files(inpath, pattern = "_R1_001.fastq.gz", full.names = TRUE))
+filtRs <- sort(list.files(inpath, pattern = "_R2_001.fastq.gz", full.names = TRUE))
+
+# Get sample names
+# See raw data README: samples range 1 to 24 and have the following ids:
+# ROH1, ROH2, ROH3, ROH4, ..., ROH23, ROH24
+# assuming filenames have format: SAMPLENAME_XXX.fastq
+sample.names <- sapply(strsplit(basename(filtFs), "_"), `[`, 1)
+# remove ROH to have sample ids 1 to 24  (match microbial community metadata)
+sample.names <- gsub("ROH", "", sample.names)
+```
+
+### Learn the error rates
+
+[to do] The denoising process implemented by dada2 considers the probability of ...
+
+[Note:]{.underline} computationally demanding
+
+```{r learn fwd errors}
+#| Forward sequences
+print("Learning error model from fwd reads:")
+errF <- learnErrors(
+  filtFs,
+  multithread = 9, #Set up the number of threads
+  verbose = TRUE,
+  randomize = TRUE,
+  MAX_CONSIST = 20)
+save(errF, file = paste(outpath, "errF.RData", sep = "/")) #| save err object
+
+errFplot <- plotErrors(errF, nominalQ = TRUE); errFplot #| Visualize plots!
+
+png(paste(outpath, "errFplot.png", sep = "/"), #| save plot
+    width = 1000, height = 800); print(errFplot); dev.off()
+
+print("checkConvergence:")
+cat(dada2:::checkConvergence(errF)) # Confidence
+
+cat("Check: modelled the error rates from forward reads.")
+
+```
+
+The error rates for each possible transition (A→C, A→G, ...) are shown. Points are the observed error rates for each consensus quality score. The black line shows the estimated error rates after convergence of the machine-learning algorithm. The red line shows the error rates expected under the nominal definition of the Q-score.
+
+Now, repeat the process for reverse reads
+
+```{r learn rev errors}
+#| Reverse sequences
+print("Learning error model from rev reads:")
+errR <- learnErrors(
+  filtRs,
+  multithread = 9, #Set up the number of threads in the server
+  verbose = TRUE,
+  MAX_CONSIST = 20)
+
+save(errR, file = paste(outpath, "errR.RData", sep = "/"))
+
+errRplot <- plotErrors(errR, nominalQ = TRUE) ; errRplot
+
+png(paste(outpath, "errRplot.png", sep = "/"), # save plot
+    width = 1000, height = 800); print(errRplot); dev.off()
+
+print("checkConvergence:")
+cat(dada2:::checkConvergence(errR))
+
+cat("Check: modelled the error rates from reverse reads")
+save(errR, file = paste(outpath, "/errR.RData", sep = "/"))
+```
+
+### Denoise
+
+[to do] Here, the core dada2 algorithm infers the error model learned from the data on the sample sequences, to distinguish (or guess with statistics?) real biological unique sequences from unique sequences created by the technical process (BIAS). Removing false positives essentially.
+
+Used option: "pseudo-pooling" ([https://benjjneb.github.io/dada2/pseudo.html)](https://benjjneb.github.io/dada2/pseudo.html))
+
+```{r}
+dadaFs <- dada(filtFs,        # Input reads to denoise
+               err = errF,    # Error model
+               multithread = 9,  # Threads
+               pool = 'pseudo')  # sample pooling mode
+
+save(dadaFs, file = paste0(outpath, "/dadaFs.RData"))
+
+dadaRs <- dada(filtRs, err = errR, multithread = 9, pool = 'pseudo')
+
+save(dadaRs, file = paste0(outpath, "/dadaFs.RData"))
+```
+
+### Merge forward and reverse reads
+
+Up until this point, forward and reverse reads have been processed in parallel. This step will merge the forward and reverse reads into a unique sequences.
+
+Default identical overlapping length between fwd and rev reads is 12bps.
+
+```{r}
+mergers <- mergePairs(dadaFs, filtFs,
+                      dadaRs, filtRs, 
+                      verbose=TRUE)
+
+# Specify sample names
+#| From "ROH1_S165_L001_R1_001.fastq.gz" to simply "1"
+names(mergers) <- sample.names 
+
+head(mergers[[1]])
+```
+
+Check merging success: most reads should merge. If not, the causes might be not enough overlap between paired reads or presence of untrimmed primers.
+
+### Construct community tables
+
+```{r}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab) #| nº of samples & nº of unique sequences (ASV)
+
+```
+
+### Remove chimeras
+
+[to do] Chimeras are artifactual sequences that form during library preparation, where two sequences from different organisms merge together and form a sequence that is half species A and half species B.
+
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, 
+                                    method="consensus",
+                                    multithread=9, 
+                                    verbose=TRUE)
+
+dim(seqtab.nochim) # lots of ASVs removed (comparing to dim(seqtab))
+
+# proportion of non-chimeric sequences
+sum(seqtab.nochim)/sum(seqtab)  # but MOST READS remain
+
+# save seqtab.nochim object >>> used in NEXT STEP: taxonomy assignment
+save(seqtab.nochim,
+     file = paste(outpath, "seqtab.nochim.RData", sep = "/"))
+```
+
+### Track reads through the pipelines
+
+It is useful to check how much information (reads) as been filtered at each step of the primary bioinformatic processing, from cleaning .fastq files to merging and chimera removal.
+
+```{r}
+# Track reads through the pipeline ----
+getN <- function(x) sum(getUniques(x))
+track <- cbind(sapply(dadaFs, getN), 
+               sapply(dadaRs, getN), 
+               sapply(mergers, getN), 
+               rowSums(seqtab.nochim))
+colnames(track) <- c("denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+head(track)
+
+# save into .csv file
+write.csv(track, file = paste(outpath, "track_seqs.csv", sep = "/"))
+
+save.image(file = paste(outpath, "Environment.RData", sep = "/"))
+```

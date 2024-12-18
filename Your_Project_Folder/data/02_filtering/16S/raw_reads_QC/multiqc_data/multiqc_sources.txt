@@ -1,5 +1,0 @@
-Module	Section	Sample Name	Source
-FastQC	all_sections	ROH1_S165_L001_R1_001	/home/ecosystems/Bioinformatics/Classes/BioInfo4EEG/Your_Project_Folder/data/01_raw/16S/ROH1_S165_L001_R1_001_fastqc.zip
-FastQC	all_sections	ROH1_S165_L001_R2_001	/home/ecosystems/Bioinformatics/Classes/BioInfo4EEG/Your_Project_Folder/data/01_raw/16S/ROH1_S165_L001_R2_001_fastqc.zip
-FastQC	all_sections	ROH2_S166_L001_R1_001	/home/ecosystems/Bioinformatics/Classes/BioInfo4EEG/Your_Project_Folder/data/01_raw/16S/ROH2_S166_L001_R1_001_fastqc.zip
-FastQC	all_sections	ROH2_S166_L001_R2_001	/home/ecosystems/Bioinformatics/Classes/BioInfo4EEG/Your_Project_Folder/data/01_raw/16S/ROH2_S166_L001_R2_001_fastqc.zip
